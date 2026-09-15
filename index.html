@@ -8,7 +8,7 @@
   <!-- SEO & PWA Meta Tags -->
   <meta name="description" content="Directorio digital y plataforma de gestión para los emprendimientos y negocios locales de Cisneros, Antioquia, Colombia.">
   <meta name="theme-color" content="#166534">
-  <link rel="manifest" href="public/manifest.json">
+  <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/svg+xml" href="public/icons/icon-192.svg">
   <link rel="apple-touch-icon" href="public/icons/icon-192.svg">
 
@@ -1351,7 +1351,7 @@
     // =========================================================================
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('public/sw.js')
+        navigator.serviceWorker.register('/sw.js')
           .then(reg => console.log('[PWA] Service Worker registrado con éxito:', reg.scope))
           .catch(err => console.log('[PWA] Service Worker no registrado (normal en preview local):', err));
       });
