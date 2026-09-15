@@ -101,6 +101,7 @@
       activeView: 'home', // 'home', 'detail'
       selectedBusiness: null,
       currentUser: JSON.parse(localStorage.getItem('cis_user')) || null,
+      menuDraft: [],
       modals: {
         login: false,
         review: false,
@@ -482,15 +483,49 @@
                 </div>
               </div>
 
-              <!-- Botones de Acción y Contacto -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <a href="https://wa.me/57${b.whatsapp_number.replace(/\D/g, '')}?text=Hola%2C%20los%20contacto%20desde%20Cisneros%20Emprende" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm">
-                  <span>💬</span> WhatsApp Directo: ${b.whatsapp_number}
-                </a>
+              <!-- Observaciones de Pedidos & Domicilios -->
+              ${(b.delivery_available || b.order_notes) ? `
+                <div class="bg-amber-50/70 border border-amber-200 p-3.5 rounded-2xl text-xs space-y-1">
+                  <div class="flex items-center gap-1.5 font-bold text-amber-950">
+                    <span>🛵</span> <span>Condiciones de Domicilios & Pedidos:</span>
+                  </div>
+                  <p class="text-amber-900">
+                    ${b.delivery_available 
+                      ? (b.delivery_cost === 0 
+                          ? '• Domicilio completamente <strong>Gratis</strong>.' 
+                          : `• Tarifa de domicilio: <strong>$${Number(b.delivery_cost).toLocaleString('es-CO')}</strong>.` + (b.delivery_min_order > 0 ? ` (¡Gratis a partir de $${Number(b.delivery_min_order).toLocaleString('es-CO')}!)` : '')) 
+                      : '• Solo atención en el local comercial (sin servicio a domicilio).'}
+                  </p>
+                  ${b.order_notes ? `<p class="text-slate-700 italic pt-0.5">• Nota del comerciante: "${b.order_notes}"</p>` : ''}
+                </div>
+              ` : ''}
 
-                <button onclick="window.openModal('report')" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-1">
-                  <span>⚠️</span> Reportar Información Errada
-                </button>
+              <!-- Botones de Acción, Redes y Contacto -->
+              <div class="space-y-2 pt-1">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <a href="https://wa.me/57${b.whatsapp_number.replace(/\D/g, '')}?text=Hola%2C%20los%20contacto%20desde%20Cisneros%20Emprende" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors">
+                    <span>💬</span> WhatsApp: ${b.whatsapp_number}
+                  </a>
+
+                  <button onclick="window.openModal('report')" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-1 transition-colors">
+                    <span>⚠️</span> Reportar Información
+                  </button>
+                </div>
+
+                ${(b.website_url || b.instagram) ? `
+                  <div class="flex items-center gap-2 pt-1">
+                    ${b.website_url ? `
+                      <a href="${b.website_url}" target="_blank" class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl text-[11px] flex items-center gap-1 shadow-2xs">
+                        <span>🌐</span> Sitio Web / Facebook
+                      </a>
+                    ` : ''}
+                    ${b.instagram ? `
+                      <a href="${b.instagram.startsWith('http') ? b.instagram : 'https://instagram.com/' + b.instagram.replace('@', '')}" target="_blank" class="bg-white hover:bg-slate-50 border border-slate-200 text-pink-700 font-bold px-3 py-1.5 rounded-xl text-[11px] flex items-center gap-1 shadow-2xs">
+                        <span>📸</span> ${b.instagram.startsWith('@') ? b.instagram : 'Instagram'}
+                      </a>
+                    ` : ''}
+                  </div>
+                ` : ''}
               </div>
             </div>
 
@@ -616,32 +651,171 @@
         `;
       }
 
-      // MODAL REGISTRO DE NEGOCIO
+      // MODAL REGISTRO DE NEGOCIO (COMPLETO CON FOTOS, MENÚ, PRECIOS, DOMICILIOS Y REDES)
       if (state.modals.register) {
         html += `
-          <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
-              <div class="bg-emerald-800 text-white p-4 flex justify-between items-center">
-                <h3 class="font-bold text-base">🏪 Registrar Mi Negocio en Cisneros</h3>
-                <button onclick="window.closeModal('register')" class="font-bold text-lg">✕</button>
+          <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+            <div class="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl max-h-[92vh] flex flex-col">
+              <!-- Encabezado con identidad de Cisneros -->
+              <div class="bg-emerald-900 text-white px-5 py-4 flex justify-between items-center border-b border-emerald-800">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-lg bg-white p-0.5 flex items-center justify-center shadow-xs">
+                    <img src="escudo-cisneros.png" class="w-full h-full object-contain" alt="Cisneros" onerror="this.src='public/escudo-cisneros.png'" />
+                  </div>
+                  <div>
+                    <h3 class="font-extrabold text-sm sm:text-base leading-tight">Registrar Mi Emprendimiento</h3>
+                    <p class="text-[10px] text-emerald-200">Vitrina comercial 100% gratuita de Cisneros, Antioquia</p>
+                  </div>
+                </div>
+                <button onclick="window.closeModal('register')" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-sm transition-colors">✕</button>
               </div>
-              <form onsubmit="event.preventDefault(); window.submitBusiness();" class="p-5 overflow-y-auto space-y-3">
-                <input id="reg-name" type="text" placeholder="Nombre del negocio (ej: Truchera El Trapiche)" class="w-full text-xs p-2.5 rounded-xl border border-slate-300" required />
-                <select id="reg-cat" class="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-white">
-                  ${state.categories.map(c => `<option value="${c.slug}">${c.name}</option>`).join('')}
-                </select>
-                <textarea id="reg-desc" rows="2" placeholder="Descripción de tus productos o servicios..." class="w-full text-xs p-2.5 rounded-xl border border-slate-300 resize-none"></textarea>
-                <div class="bg-emerald-50/70 p-3 rounded-xl border border-emerald-200/60 space-y-2">
-                  <span class="text-[11px] font-bold text-emerald-950 block">📍 Ubicación en Cisneros (Descriptiva):</span>
-                  <input id="reg-addr" type="text" placeholder="Dirección exacta (ej: Calle 19 # 20-14)" class="w-full text-xs p-2 rounded-lg border border-slate-300" required />
-                  <input id="reg-ref" type="text" placeholder="Punto de referencia (ej: frente a la estación)" class="w-full text-xs p-2 rounded-lg border border-slate-300" />
+
+              <!-- Formulario modular con scroll -->
+              <form onsubmit="event.preventDefault(); window.submitBusiness();" class="p-5 overflow-y-auto space-y-4 text-xs">
+                
+                <!-- SECCIÓN 1: DATOS BÁSICOS -->
+                <div class="space-y-2">
+                  <label class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                    <span>📌</span> <span>Información Principal:</span>
+                  </label>
+                  <input id="reg-name" type="text" placeholder="Nombre del negocio (ej: Truchera El Trapiche, Panadería La Abuela)" class="w-full p-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 focus:outline-none" required />
+                  
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-[11px] font-semibold text-slate-600 mb-1">Categoría del Comercio:</label>
+                      <select id="reg-cat" class="w-full p-2.5 rounded-xl border border-slate-300 bg-white focus:border-emerald-600 focus:outline-none">
+                        ${state.categories.map(c => `<option value="${c.slug}">${c.emoji} ${c.name}</option>`).join('')}
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-semibold text-slate-600 mb-1">WhatsApp para Pedidos/Clientes:</label>
+                      <input id="reg-wa" type="tel" placeholder="ej: 3101234567" class="w-full p-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 focus:outline-none" required />
+                    </div>
+                  </div>
+
+                  <textarea id="reg-desc" rows="2" placeholder="Breve descripción de lo que ofreces, especialidades, historia o servicios..." class="w-full p-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 focus:outline-none resize-none"></textarea>
                 </div>
-                <input id="reg-wa" type="tel" placeholder="WhatsApp para pedidos (ej: 3101234567)" class="w-full text-xs p-2.5 rounded-xl border border-slate-300" required />
-                <div class="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl">
-                  ℹ️ Todo negocio nuevo se registra en estado <strong>Pendiente</strong> para revisión de Cami antes de publicarse en la vitrina.
+
+                <!-- SECCIÓN 2: LOGO Y FOTOS DEL LOCAL -->
+                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
+                  <label class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                    <span>🖼️</span> <span>Logo y Fotos del Negocio / Local:</span>
+                  </label>
+                  <p class="text-[10px] text-slate-500">Pega enlaces de fotos de tu negocio, o usa el selector para cargar fotos desde tu celular/PC.</p>
+                  
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">Foto de Portada / Fachada:</label>
+                      <input id="reg-cover" type="text" placeholder="https://... o sube abajo" class="w-full p-2 rounded-lg border border-slate-300 bg-white text-[11px]" />
+                      <input type="file" id="reg-cover-file" accept="image/*" class="mt-1 block w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">Logo del Negocio (Opcional):</label>
+                      <input id="reg-logo" type="text" placeholder="https://... o sube abajo" class="w-full p-2 rounded-lg border border-slate-300 bg-white text-[11px]" />
+                      <input type="file" id="reg-logo-file" accept="image/*" class="mt-1 block w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+                    </div>
+                  </div>
                 </div>
-                <button type="submit" class="w-full bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-sm">
-                  Enviar Solicitud de Registro
+
+                <!-- SECCIÓN 3: DIRECCIÓN POR ESCRITO (CERO MAPAS) -->
+                <div class="bg-emerald-50/70 p-3.5 rounded-2xl border border-emerald-200/80 space-y-2">
+                  <label class="font-bold text-emerald-950 text-xs flex items-center gap-1.5">
+                    <span>📍</span> <span>Ubicación en Cisneros (100% Descriptiva):</span>
+                  </label>
+                  <input id="reg-addr" type="text" placeholder="Dirección exacta o Barrio (ej: Calle 19 # 20-14, Barrio El Uno)" class="w-full p-2.5 rounded-xl border border-slate-300 bg-white" required />
+                  <input id="reg-ref" type="text" placeholder="Punto de referencia clave (ej: diagonal a la Estación, junto al Túnel)" class="w-full p-2 rounded-lg border border-slate-300 bg-white" />
+                  <input id="reg-loc-photo" type="text" placeholder="Foto o video de la fachada/ubicación (Enlace de Facebook, TikTok o foto)" class="w-full p-2 rounded-lg border border-slate-300 bg-white text-[11px]" />
+                </div>
+
+                <!-- SECCIÓN 4: DOMICILIOS & HORARIOS -->
+                <div class="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-200/80 space-y-2.5">
+                  <label class="font-bold text-amber-950 text-xs flex items-center gap-1.5">
+                    <span>🛵</span> <span>Servicio de Domicilios & Horario:</span>
+                  </label>
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div>
+                      <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">¿Haces domicilios?:</label>
+                      <select id="reg-has-delivery" class="w-full p-2 rounded-lg border border-slate-300 bg-white">
+                        <option value="si">✅ Sí, cuenta con domicilios</option>
+                        <option value="no">❌ Solo atención en local</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">Costo de Domicilio ($ COP):</label>
+                      <input id="reg-delivery-cost" type="number" placeholder="0 = Gratis o ej: 3000" value="0" class="w-full p-2 rounded-lg border border-slate-300 bg-white" />
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">Gratis a partir de ($ COP):</label>
+                      <input id="reg-delivery-min" type="number" placeholder="ej: 25000 (Opcional)" class="w-full p-2 rounded-lg border border-slate-300 bg-white" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 pt-1">
+                    <div>
+                      <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">Hora de Apertura:</label>
+                      <input id="reg-open" type="time" value="08:00" class="w-full p-2 rounded-lg border border-slate-300 bg-white" />
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-semibold text-slate-600 mb-0.5">Hora de Cierre:</label>
+                      <input id="reg-close" type="time" value="20:00" class="w-full p-2 rounded-lg border border-slate-300 bg-white" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SECCIÓN 5: PRODUCTOS / MENÚ CON PRECIOS -->
+                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <label class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                      <span>🍽️</span> <span>Menú, Productos o Servicios:</span>
+                    </label>
+                    <button type="button" onclick="window.addDraftProduct()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-2.5 py-1 rounded-lg text-[11px] shadow-2xs flex items-center gap-1">
+                      <span>+</span> Agregar Plato/Producto
+                    </button>
+                  </div>
+                  <p class="text-[10px] text-slate-500">Agrega tus productos con nombre y precio para que los clientes puedan pedirlos fácilmente.</p>
+
+                  <!-- Lista de productos añadidos -->
+                  <div id="draft-products-list" class="space-y-1.5">
+                    ${(state.menuDraft && state.menuDraft.length > 0) ? state.menuDraft.map((p, idx) => `
+                      <div class="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between gap-2 shadow-2xs">
+                        <div class="flex-1">
+                          <span class="font-bold text-slate-800 block">${p.name}</span>
+                          <span class="text-[10px] text-emerald-700 font-bold">$${Number(p.price).toLocaleString('es-CO')}</span>
+                          ${p.description ? `<span class="text-[10px] text-slate-500 block">${p.description}</span>` : ''}
+                        </div>
+                        <button type="button" onclick="window.removeDraftProduct(${idx})" class="text-rose-600 hover:text-rose-800 font-bold text-xs p-1">🗑️</button>
+                      </div>
+                    `).join('') : `
+                      <div class="bg-white p-3 rounded-xl border border-dashed border-slate-300 text-center text-slate-400 text-[11px]">
+                        No has agregado productos aún. Toca "+ Agregar Plato/Producto" arriba.
+                      </div>
+                    `}
+                  </div>
+                </div>
+
+                <!-- SECCIÓN 6: REDES SOCIALES & OBSERVACIONES -->
+                <div class="space-y-2">
+                  <label class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                    <span>🌐</span> <span>Sitio Web & Redes Sociales (Opcional):</span>
+                  </label>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input id="reg-web" type="url" placeholder="Página Web o Facebook (ej: https://facebook.com/...)" class="w-full p-2.5 rounded-xl border border-slate-300" />
+                    <input id="reg-insta" type="text" placeholder="Usuario o link de Instagram (ej: @minegocio)" class="w-full p-2.5 rounded-xl border border-slate-300" />
+                  </div>
+                  <textarea id="reg-notes" rows="2" placeholder="Observaciones para pedidos (ej: 'Pedir con 1 hora de anticipación', 'Aceptamos Nequi, Bancolombia y Efectivo')..." class="w-full p-2.5 rounded-xl border border-slate-300 resize-none"></textarea>
+                </div>
+
+                <!-- AVISO INSTITUCIONAL -->
+                <div class="text-[11px] text-slate-600 bg-emerald-50 p-3 rounded-2xl border border-emerald-200 flex items-start gap-2">
+                  <span class="text-base">🛡️</span>
+                  <div>
+                    <span class="font-bold text-emerald-950 block">Revisión de Seguridad:</span>
+                    Todo negocio nuevo se registra en estado <strong>Pendiente</strong> para revisión de Cami antes de publicarse. Una vez aprobado, tus actualizaciones serán automáticas.
+                  </div>
+                </div>
+
+                <!-- BOTÓN DE ENVÍO -->
+                <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-3.5 rounded-2xl text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2">
+                  <span>🚀</span> <span>Registrar y Publicar Mi Emprendimiento</span>
                 </button>
               </form>
             </div>
@@ -883,6 +1057,12 @@
     };
 
     window.openModal = function(name) {
+      if (name === 'register' && !state.currentUser) {
+        alert('🔐 Para registrar tu emprendimiento en Cisneros Emprende, primero debes ingresar con tu cuenta de Google.');
+        state.modals.login = true;
+        renderApp();
+        return;
+      }
       state.modals[name] = true;
       renderApp();
     };
@@ -910,6 +1090,30 @@
       renderApp();
     };
 
+    window.addDraftProduct = function() {
+      const name = prompt('Nombre del plato, producto o servicio:');
+      if (!name || !name.trim()) return;
+      const priceStr = prompt('Precio en pesos colombianos (COP):', '10000');
+      const price = Number(priceStr?.replace(/\D/g, '') || 0);
+      const desc = prompt('Breve descripción o ingredientes (opcional):') || '';
+
+      if (!state.menuDraft) state.menuDraft = [];
+      state.menuDraft.push({
+        id: 'p-' + Date.now(),
+        name: name.trim(),
+        price: price,
+        description: desc.trim()
+      });
+      renderApp();
+    };
+
+    window.removeDraftProduct = function(index) {
+      if (state.menuDraft && state.menuDraft[index]) {
+        state.menuDraft.splice(index, 1);
+        renderApp();
+      }
+    };
+
     window.submitBusiness = function() {
       const name = document.getElementById('reg-name')?.value.trim();
       const cat = document.getElementById('reg-cat')?.value;
@@ -917,9 +1121,25 @@
       const addr = document.getElementById('reg-addr')?.value.trim();
       const ref = document.getElementById('reg-ref')?.value.trim();
       const wa = document.getElementById('reg-wa')?.value.trim();
+      const coverUrl = document.getElementById('reg-cover')?.value.trim();
+      const logoUrl = document.getElementById('reg-logo')?.value.trim();
+      const locPhoto = document.getElementById('reg-loc-photo')?.value.trim();
+      const hasDel = document.getElementById('reg-has-delivery')?.value === 'si';
+      const delCost = Number(document.getElementById('reg-delivery-cost')?.value || 0);
+      const delMin = Number(document.getElementById('reg-delivery-min')?.value || 0);
+      const openTime = document.getElementById('reg-open')?.value || '08:00';
+      const closeTime = document.getElementById('reg-close')?.value || '20:00';
+      const web = document.getElementById('reg-web')?.value.trim();
+      const insta = document.getElementById('reg-insta')?.value.trim();
+      const notes = document.getElementById('reg-notes')?.value.trim();
+
+      const defaultCover = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800';
+      const covers = coverUrl ? [coverUrl] : [defaultCover];
+      if (locPhoto) covers.push(locPhoto);
 
       const newBiz = {
         id: 'biz-' + Date.now(),
+        owner_id: state.currentUser?.email || 'local',
         name,
         category_slug: cat,
         category_name: state.categories.find(c => c.slug === cat)?.name || 'Comercio',
@@ -927,21 +1147,41 @@
         written_address: addr,
         reference_point: ref,
         whatsapp_number: wa,
-        delivery_available: true,
-        delivery_cost: 0,
-        status: 'pending', // Regla de aprobación
+        logo_url: logoUrl || null,
+        website_url: web || null,
+        instagram: insta || null,
+        order_notes: notes || null,
+        delivery_available: hasDel,
+        delivery_cost: delCost,
+        delivery_min_order: delMin,
+        status: (state.currentUser?.role === 'admin') ? 'approved' : 'pending',
         is_featured: false,
         avg_rating: 0,
         total_reviews: 0,
         total_favorites: 0,
-        cover_images: ['https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800'],
-        schedule: { lunes: { open: '08:00', close: '20:00', closed: false } },
-        products: []
+        cover_images: covers,
+        schedule: {
+          lunes: { open: openTime, close: closeTime, closed: false },
+          martes: { open: openTime, close: closeTime, closed: false },
+          miercoles: { open: openTime, close: closeTime, closed: false },
+          jueves: { open: openTime, close: closeTime, closed: false },
+          viernes: { open: openTime, close: closeTime, closed: false },
+          sabado: { open: openTime, close: closeTime, closed: false },
+          domingo: { open: openTime, close: closeTime, closed: false }
+        },
+        products: state.menuDraft ? [...state.menuDraft] : []
       };
 
       state.businesses.push(newBiz);
+      state.menuDraft = []; // reset draft
       saveState();
-      alert('¡Negocio registrado! Ha quedado en estado "Pendiente" para revisión de Cami.');
+
+      if (newBiz.status === 'approved') {
+        alert('¡Excelente Cami! Al ser administradora, tu negocio ha quedado Aprobado y publicado de inmediato en la vitrina.');
+      } else {
+        alert('¡Emprendimiento registrado con éxito! Ha quedado en estado "Pendiente" para revisión y aprobación de Cami.');
+      }
+
       state.modals.register = false;
       renderApp();
     };
