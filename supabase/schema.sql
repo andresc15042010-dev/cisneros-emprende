@@ -263,7 +263,7 @@ ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Profiles son legibles públicamente" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "Usuarios actualizan su propio perfil" ON public.profiles 
     FOR UPDATE USING (auth.uid() = id) 
-    WITH CHECK (auth.uid() = id AND role = (SELECT role FROM public.profiles WHERE id = auth.uid()));
+    WITH CHECK (auth.uid() = id);
 
 -- 2. CATEGORIES
 CREATE POLICY "Categorías lectura pública" ON public.categories FOR SELECT USING (true);
@@ -284,7 +284,10 @@ CREATE POLICY "Emprendedor actualiza su propio negocio" ON public.businesses
     FOR UPDATE USING (
         auth.uid() = owner_id OR public.is_admin()
     ) WITH CHECK (
-        public.is_admin() OR (auth.uid() = owner_id AND status = (SELECT status FROM public.businesses WHERE id = id))
+        public.is_admin() OR (
+            auth.uid() = owner_id AND 
+            status = (SELECT b.status FROM public.businesses b WHERE b.id = businesses.id)
+        )
     );
 
 CREATE POLICY "Admin elimina negocios" ON public.businesses 
@@ -304,11 +307,10 @@ CREATE POLICY "Dueño gestiona productos de su negocio" ON public.products
 -- 5. REVIEWS
 CREATE POLICY "Reseñas legibles públicamente" ON public.reviews FOR SELECT USING (true);
 
-CREATE POLICY "Solo 1 reseña por usuario y negocio" ON public.reviews 
+CREATE POLICY "Usuarios registrados crean reseñas" ON public.reviews 
     FOR INSERT WITH CHECK (
         auth.uid() IS NOT NULL AND 
-        auth.uid() = user_id AND
-        NOT EXISTS (SELECT 1 FROM public.reviews r WHERE r.business_id = reviews.business_id AND r.user_id = auth.uid())
+        auth.uid() = user_id
     );
 
 CREATE POLICY "Usuario edita su propia reseña" ON public.reviews 
