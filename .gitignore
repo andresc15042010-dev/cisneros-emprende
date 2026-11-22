@@ -30,3 +30,9 @@ Thumbs.db
 # Respaldo
 *.zip
 .agent_backup/
+
+# Scripts locales con credenciales (nunca subir)
+verify.ps1
+.github_deploy_config.ps1
+.env
+
